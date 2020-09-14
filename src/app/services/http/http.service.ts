@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
 import {Observable, throwError} from 'rxjs';
-import {catchError, filter, map, switchMap, take, takeUntil, timeout} from 'rxjs/operators';
+import {catchError, filter, map, take, timeout} from 'rxjs/operators';
 import {HttpClient, HttpResponse} from '@angular/common/http';
 import {HttpRequestMethodEnum} from '../../enums/http/http-request-method.enum';
 import {RequestOptions} from '../../interfaces/http/http-request-options.i';
@@ -24,16 +24,24 @@ export class RequestService {
         options.reportProgress = true;
         options.observe = 'response';
 
+        return this.sendHttpRequest$(requestMethod, url, options);
+    }
+
+    protected sendHttpRequest$(requestMethod: HttpRequestMethodEnum, url: string, options?: RequestOptions): Observable<any> {
         const requestTimeoutInMilliseconds: number = RequestService.REQUEST_TIMEOUT_IN_SECONDS * 1000;
 
         let renewableRequestTimeout: number = requestTimeoutInMilliseconds;
 
-        return this.http.request(requestMethod, url, options).pipe(
+        const requestOptions: object = JSON.parse(JSON.stringify(options));
+
+        delete (requestOptions as any).returnFullResponse;
+
+        return this.http.request(requestMethod, url, requestOptions).pipe(
             map((response: any) => {
                 renewableRequestTimeout = requestTimeoutInMilliseconds;
 
                 if (response instanceof HttpResponse) {
-                    return response.body;
+                    return options.returnFullResponse ? response : response.body;
                 } else {
                     return undefined;
                 }

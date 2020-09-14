@@ -1,0 +1,33 @@
+<div class="selector-container" [class]="popupClass" [ngClass]="{'options-visible': areOptionsVisible}">
+
+    <div class="selector-content" (click)="toggleOptionsList($event)">
+        <div class="selected-value-container" [ngClass]="{'not-selected': !selectedOption?.name}">
+            <div class="selected-value-container-text">{{selectedValue === '' ? placeHolder : getOptionLabel(selectedOption)}}</div>
+        </div>
+
+        <div class="selector-arrow-down-icon-container">
+            <svg class="arrow-down-icon"
+                 [ngClass]="{'upside-down': areOptionsVisible}"
+                 viewBox="0 0 24 24"
+                 xmlns="http://www.w3.org/2000/svg"
+                 fill-rule="evenodd"
+                 clip-rule="evenodd">
+                <use xlink:href="assets/icons/iconmonstr-arrow-80.svg#arrowDownIcon"/>
+            </svg>
+        </div>
+    </div>
+
+    <div class="options-container"
+         *ngIf="areOptionsVisible">
+        <div class="options-content">
+            <div *ngFor="let option of options"
+                 class="option-item"
+                 [ngClass]="{'selected': selectedValue === option.name}"
+                 (click)="selectOption($event, option)">
+                <span class="option-text">
+                    {{getOptionLabel(option)}}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,20 +1,20 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { MultiplePagesTableComponent } from './multiple-pages-table.component';
+import { AppTableComponent } from './app-table.component';
 
 describe('MultiplePagesTableComponent', () => {
-  let component: MultiplePagesTableComponent;
-  let fixture: ComponentFixture<MultiplePagesTableComponent>;
+  let component: AppTableComponent;
+  let fixture: ComponentFixture<AppTableComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ MultiplePagesTableComponent ]
+      declarations: [ AppTableComponent ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(MultiplePagesTableComponent);
+    fixture = TestBed.createComponent(AppTableComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

@@ -1,0 +1,24 @@
+<div class="pages-numbers-content">
+    <div *ngIf="arePagesEmpty" class="no-pages-notification-text">No pages</div>
+    <div class="arrow-button page-control-panel-button circle-button"
+         *ngIf="!arePagesEmpty"
+         [ngClass]="{'disabled': isActivePageFirst || arePagesEmpty}"
+         (click)="setActivePage(activePage - 1)">
+        &larr;
+    </div>
+
+    <div *ngFor="let pageNumber of this.getRangeOfPagesNumbers()"
+         class="page-control-panel-button circle-button arrow-button"
+         [ngClass]="{'active': activePage === pageNumber}"
+         (click)="setActivePage(pageNumber)"
+    >
+        <div class="page-control-panel-button-text">{{pageNumber}}</div>
+    </div>
+
+    <div class="page-control-panel-button circle-button arrow-button"
+         *ngIf="!arePagesEmpty"
+         [ngClass]="{'disabled': isActivePageLast || arePagesEmpty}"
+         (click)="setActivePage(activePage + 1)">
+        &rarr;
+    </div>
+</div>

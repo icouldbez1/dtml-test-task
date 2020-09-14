@@ -1,0 +1,234 @@
+@import '../../../assets/styles/varibles.scss';
+
+.page-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+
+// INPUT STYLES
+
+.input-cont {
+    position: relative;
+    background: #ec8700;
+    height: 100%;
+    width: 100%;
+
+    display: flex;
+    justify-content: space-between;
+}
+
+.input-dtml {
+    height: 100%;
+    padding: 0 0 0 10px;
+
+    outline: none;
+    border: none;
+
+    background: inherit;
+
+    color: white;
+    font-size: 14px;
+
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+
+    &::placeholder {
+        color: rgb(255 255 255 / 65%);
+    }
+}
+
+
+.search-icon-container {
+    min-width: 24px;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    .search-icon {
+        height: 14px;
+        width: 14px;
+        fill: white;
+    }
+}
+
+.series-table-container {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    margin-top: 200px;
+
+    .series-table-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 0 14px 0 #dcdcdc;
+    }
+}
+
+.series-filters-container {
+    display: flex;
+    width: 100%;
+    height: 30px;
+
+    //display: flex;
+    //align-items: center;
+    //width: 100%;
+    //height: 30px;
+
+    .filter-column-container {
+        display: flex;
+        flex: 1 1 auto;
+
+        // min-width: 0 - In order to make the inner text truncated. (See: https://codepen.io/aj-foster/pen/emBYPW)
+        min-width: 0;
+
+        &.no-grow {
+            flex-grow: 0;
+        }
+
+        &.flex-basis-40 {
+            flex-basis: 40%;
+        }
+
+
+        margin: 0 5px;
+
+        &:first-child {
+            margin: 0 5px 0 0;
+        }
+
+        &:last-child {
+            margin: 0 0 0 5px;
+        }
+    }
+
+    .filter-text {
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+
+        padding: 5px;
+    }
+
+
+    // REMOVE IT
+    //& > * {
+    //    height: 100%;
+    //    margin: 0 5px;
+    //    flex: 1 1 auto;
+    //
+    //    &:first-child {
+    //        margin: 0 5px 0 0;
+    //
+    //        flex: 0 1 40%;
+    //    }
+    //
+    //    &:last-child {
+    //        margin: 0 0 0 5px;
+    //    }
+    //}
+}
+
+.select-dtml {
+    height: 100%;
+    border: none;
+    outline: none;
+    background: #ec8700;
+    color: white;
+    font-size: 14px;
+}
+
+
+.page-control-panel {
+    position: relative;
+    display: flex;
+    width: 100%;
+}
+
+
+.pages-numbers-container {
+    position: relative;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    .page-switcher {
+        z-index: 1;
+    }
+
+    .page-control-panel-button {
+        margin: 0 10px;
+
+        div {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+}
+
+.items-per-page-limitations-container {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+
+    .items-per-page-limitations-content {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1;
+    }
+
+    .page-control-panel-button {
+        margin: 0 10px;
+    }
+}
+
+.pages-numerations-limitations-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+
+@media (max-width: $low-res) {
+    .series-table-content {
+        width: 100%;
+    }
+
+    .page-control-panel {
+        flex-direction: column;
+
+        .items-per-page-limitations-container {
+            margin-top: 50px;
+            position: initial;
+            justify-content: center;
+        }
+    }
+}
+
+@media (min-width: $low-res + 1) {
+    .series-table-content {
+        width: 60%;
+    }
+
+    .page-control-panel {
+        flex-direction: row;
+
+        .items-per-page-limitations-container {
+            position: absolute;
+            justify-content: flex-end;
+        }
+    }
+}
+

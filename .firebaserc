@@ -1,0 +1,11 @@
+{
+  "targets": {
+    "dtml-series-js-task": {
+      "hosting": {
+        "dtml-test-task": [
+          "dtml-series-js-task"
+        ]
+      }
+    }
+  }
+}

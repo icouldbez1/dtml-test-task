@@ -121,8 +121,13 @@
               "devServerTarget": "dtml-test-task:serve:production"
             }
           }
+        },
+        "deploy": {
+          "builder": "@angular/fire:deploy",
+          "options": {}
         }
       }
-    }},
+    }
+  },
   "defaultProject": "dtml-test-task"
 }

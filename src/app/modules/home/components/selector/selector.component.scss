@@ -1,0 +1,146 @@
+:host {
+    user-select: none;
+    height: 100%;
+    width: 100%;
+}
+
+.selector-container {
+    position: relative;
+
+    background: #ec8700;
+
+    height: 100%;
+
+    .selector-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        height: 100%;
+    }
+}
+
+.selected-value-container {
+    padding: 0 0 0 10px;
+    font-size: 14px;
+    color: white;
+    height: 100%;
+    display: flex;
+    align-items: center;
+
+    overflow: hidden;
+    width: 100%;
+
+    &.not-selected {
+        color: rgb(255 255 255 / 65%);
+    }
+
+    .selected-value-container-text {
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+}
+
+.selector-arrow-down-icon-container {
+    min-width: 24px;
+    //max-width: 20%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    .arrow-down-icon {
+        height: 8px;
+        width: 8px;
+        fill: white;
+        transition: .2s ease-in-out;
+
+        &.upside-down {
+            transform: rotateZ(180deg);
+        }
+    }
+}
+
+.options-container {
+    position: absolute;
+    top: 100%;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    z-index: 2;
+
+    .options-content {
+        background: #565656;
+
+        width: 100%;
+
+        max-height: 200px;
+        overflow: auto;
+        position: relative;
+
+        box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.45);
+
+        /* width */
+        &::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        /* Track */
+        &::-webkit-scrollbar-track {
+            background: #998787;
+        }
+
+        /* Handle */
+        &::-webkit-scrollbar-thumb {
+            background: #d2d2d2;
+        }
+
+        /* Handle on hover */
+        &::-webkit-scrollbar-thumb:hover {
+            background: #f4f4f4;
+        }
+    }
+
+    .option-item {
+        //background: #6b6b6b;
+        color: white;
+
+        min-height: 30px;
+        display: flex;
+        align-items: center;
+        position: relative;
+
+        background: #7f6f6f;
+
+        &.selected::after {
+            content: '';
+            position: absolute;
+            height: 100%;
+            width: 2px;
+            background: #ea8601;
+            top: 0;
+        }
+
+
+        &:nth-child(even) {
+            background: #756767;
+
+            //background: #ccc;
+        }
+
+        &:hover {
+            background: #5e5454;
+        }
+
+        .option-text {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+
+            font-size: 14px;
+
+            padding: 1px 5px;
+        }
+    }
+}

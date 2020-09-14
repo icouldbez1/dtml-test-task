@@ -3,20 +3,23 @@ import {NgModule} from '@angular/core';
 
 import {AppRoutingModule} from './app-routing.module';
 import {AppComponent} from './app.component';
-import {HomeComponent} from './modules/home/home.component';
 import {HttpClientModule} from '@angular/common/http';
-import { MultiplePagesTableComponent } from './modules/home/components/multiple-pages-table/multiple-pages-table.component';
+import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
+import {AngularFirestoreModule} from '@angular/fire/firestore';
+import {AngularFireModule} from '@angular/fire';
+import {environment} from '../environments/environment';
 
 @NgModule({
     declarations: [
-        AppComponent,
-        HomeComponent,
-        MultiplePagesTableComponent
+        AppComponent
     ],
     imports: [
         BrowserModule,
         AppRoutingModule,
-        HttpClientModule
+        HttpClientModule,
+        AngularFirestoreModule,
+        AngularFireModule.initializeApp(environment.firebase),
+        BrowserAnimationsModule
     ],
     providers: [],
     bootstrap: [AppComponent]
