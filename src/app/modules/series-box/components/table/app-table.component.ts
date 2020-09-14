@@ -1,16 +1,17 @@
 import {Component, ElementRef, EventEmitter, Input, Output, ViewChild} from '@angular/core';
+import {OrderApproachEnum} from '../../enums/order-approach.enum';
 
 export interface HeaderColumn {
     name: string;
     label?: string;
     isSortable?: boolean;
     type?: 'date' | string;
-    sortType?: string;
+    sortType?: OrderApproachEnum;
 }
 
 export interface ColumnSortChangeData {
     name: string;
-    sortType: string;
+    sortType: OrderApproachEnum;
 }
 
 @Component({
@@ -36,7 +37,7 @@ export class AppTableComponent {
         this.headerColumns = columns.map((column: HeaderColumn) => {
             // TODO CHECK IF SORT IS VALID - ASC DESC ''
             if (column.isSortable && typeof column.sortType !== 'string') {
-                column.sortType = '';
+                column.sortType = OrderApproachEnum.EMPTY;
             }
 
             return column;
@@ -51,12 +52,12 @@ export class AppTableComponent {
 
             this.resetColumnsSort();
 
-            if (targetColumnSort === '') {
-                targetColumn.sortType = 'asc';
-            } else if (targetColumnSort === 'asc') {
-                targetColumn.sortType = 'desc';
-            } else if (targetColumnSort === 'desc') {
-                targetColumn.sortType = '';
+            if (targetColumnSort === OrderApproachEnum.EMPTY) {
+                targetColumn.sortType = OrderApproachEnum.ASC;
+            } else if (targetColumnSort === OrderApproachEnum.ASC) {
+                targetColumn.sortType = OrderApproachEnum.DESC;
+            } else if (targetColumnSort === OrderApproachEnum.DESC) {
+                targetColumn.sortType = OrderApproachEnum.EMPTY;
             }
 
             this.sortChange.emit({
@@ -67,6 +68,6 @@ export class AppTableComponent {
     }
 
     public resetColumnsSort(): void {
-        this.headerColumns.forEach((column: HeaderColumn) => column.sortType = '');
+        this.headerColumns.forEach((column: HeaderColumn) => column.sortType = OrderApproachEnum.EMPTY);
     }
 }

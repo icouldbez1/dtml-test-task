@@ -1,18 +1,18 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
-import {SeriesApiService} from '../../services/series-api.service';
 import {catchError, finalize, tap} from 'rxjs/operators';
 import {ColumnSortChangeData, HeaderColumn} from './components/table/app-table.component';
-import {SeriesBox, SeriesDetails, SeriesFirestoreService, SeriesGenre, SeriesQueryConfig} from '../../services/series-firestore.service';
+import {SeriesBox, SeriesDetails, SeriesFirestoreService, SeriesGenre, SeriesQueryConfig} from '../../services/db/series-firestore.service';
 import {UserSeriesConfigI} from './interfaces/user-series-config.i';
 import {Subscription, throwError} from 'rxjs';
 import {MatSnackBar} from '@angular/material/snack-bar';
+import {OrderApproachEnum} from './enums/order-approach.enum';
 
 @Component({
-    selector: 'app-home',
-    templateUrl: './home.component.html',
-    styleUrls: ['./home.component.scss']
+    selector: 'app-series-box',
+    templateUrl: './series-box.component.html',
+    styleUrls: ['./series-box.component.scss']
 })
-export class HomeComponent implements OnInit, OnDestroy {
+export class SeriesBoxComponent implements OnInit, OnDestroy {
     public static readonly DEFAULT_ITEMS_COUNT_PER_PAGE: number = 5;
 
     public localSeriesList: SeriesDetails[] = [];
@@ -24,7 +24,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     public itemsCountPerPageList: number[] = [5, 10, 25];
     public activePage: number;
 
-    public itemsPerPage: number = HomeComponent.DEFAULT_ITEMS_COUNT_PER_PAGE;
+    public itemsPerPage: number = SeriesBoxComponent.DEFAULT_ITEMS_COUNT_PER_PAGE;
 
     public genres: any = [];
 
@@ -43,11 +43,11 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     public seriesDataSub: Subscription;
 
-    constructor(private seriesApiService: SeriesApiService,
-                private seriesFirestoreService: SeriesFirestoreService,
-                private snackBarService: MatSnackBar) {
+    constructor(
+        private seriesFirestoreService: SeriesFirestoreService,
+        private snackBarService: MatSnackBar) {
         this.initYearsOptions();
-        this.getSeriesData(true);
+        this.refreshSeriesBox(true);
     }
 
     public ngOnInit(): void {
@@ -57,7 +57,86 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.seriesDataSub?.unsubscribe();
     }
 
-    public getSeriesData(initialQuery: boolean = false): void {
+    public setActivePage(pageNumber: number): void {
+        this.activePage = pageNumber;
+
+        this.userSeriesConfig.pageNumber = pageNumber;
+
+        this.refreshSeriesBox();
+
+    }
+
+    public setSort(sortData: ColumnSortChangeData): void {
+        this.userSeriesConfig.sortBy = sortData;
+
+        this.refreshSeriesBox();
+    }
+
+    public setGenreFilter(value: string): void {
+        const targetGenre: SeriesGenre = this.genres.find((genre: SeriesGenre) => genre.name === value);
+
+        if (targetGenre) {
+            this.userSeriesConfig.genreId = targetGenre.id;
+
+            this.refreshSeriesBox();
+        }
+    }
+
+    public setPremiereFilter(value: string): void {
+        const premiereDateColumn: HeaderColumn = this.tableColumns.find((column: HeaderColumn) => column.name === 'premiereDate');
+
+        premiereDateColumn.isSortable = !value;
+
+        if (!!value && this.userSeriesConfig.sortBy?.name === 'premiereDate' && !!this.userSeriesConfig.sortBy?.sortType) {
+            premiereDateColumn.sortType = this.userSeriesConfig.sortBy.sortType = OrderApproachEnum.EMPTY;
+
+        }
+
+        this.userSeriesConfig.premiereDate = Number(value);
+
+        this.refreshSeriesBox();
+    }
+
+    public setItemsPerPageLimit(itemsLimit: number): void {
+        if (this.itemsCountPerPageList.includes(itemsLimit) || itemsLimit === SeriesBoxComponent.DEFAULT_ITEMS_COUNT_PER_PAGE) {
+            this.itemsPerPage = itemsLimit;
+
+            this.userSeriesConfig.itemsPerPage = this.itemsPerPage;
+
+            this.refreshSeriesBox();
+        }
+    }
+
+    public setNameFilter(event: KeyboardEvent): void {
+        this.userSeriesConfig.seriesName = this.nameFilterInputValue;
+
+        this.refreshSeriesBox();
+    }
+
+    public getSeriesQueryByUserSeriesConfig(): SeriesQueryConfig {
+        const userConfig: UserSeriesConfigI = this.userSeriesConfig;
+
+        return {
+            name: userConfig.seriesName,
+            pageNumber: userConfig.pageNumber,
+            limit: userConfig.itemsPerPage,
+            sortBy: {name: userConfig.sortBy?.name, sortType: userConfig.sortBy?.sortType},
+            genreId: userConfig.genreId,
+            premiereDate: userConfig.premiereDate
+        };
+    }
+
+    protected initYearsOptions(): void {
+        const yearsRange: number = 300;
+        const currentYear: number = new Date().getFullYear();
+        const startYear: number = currentYear - Math.ceil(yearsRange / 2);
+
+        this.yearsOptions = Array.from({length: yearsRange + 1}, (_, index: number) => {
+            return {name: `${startYear + index}`};
+        });
+    }
+
+    protected refreshSeriesBox(initialQuery: boolean = false): void {
         this.seriesDataSub?.unsubscribe();
 
         let queryConfig: SeriesQueryConfig = {};
@@ -87,95 +166,6 @@ export class HomeComponent implements OnInit, OnDestroy {
                 this.isLoaderVisible = false;
             })
         ).subscribe();
-    }
-
-    public setActivePage(pageNumber: number): void {
-        console.log('set active page', this.activePage);
-
-        this.activePage = pageNumber;
-
-        this.userSeriesConfig.pageNumber = pageNumber;
-
-        this.getSeriesData();
-
-    }
-
-    public setSort(sortData: ColumnSortChangeData): void {
-        console.log('set sort', sortData);
-
-        this.userSeriesConfig.sortBy = sortData;
-
-        this.getSeriesData();
-    }
-
-    public setGenreFilter(value: string): void {
-        console.log('set genre filter', value);
-
-        const targetGenre: SeriesGenre = this.genres.find((genre: SeriesGenre) => genre.name === value);
-
-        if (targetGenre) {
-            this.userSeriesConfig.genreId = targetGenre.id;
-
-            this.getSeriesData();
-        }
-    }
-
-    public setPremiereFilter(value: string): void {
-        console.log('set premiere filter', value);
-        const premiereDateColumn: HeaderColumn = this.tableColumns.find((column: HeaderColumn) => column.name === 'premiereDate');
-
-        premiereDateColumn.isSortable = !value;
-
-        if (!!value && this.userSeriesConfig.sortBy?.name === 'premiereDate' && !!this.userSeriesConfig.sortBy?.sortType) {
-            this.userSeriesConfig.sortBy.sortType = '';
-            premiereDateColumn.sortType = '';
-
-        }
-
-        this.userSeriesConfig.premiereDate = Number(value);
-
-        this.getSeriesData();
-    }
-
-    public setItemsPerPageLimit(itemsLimit: number): void {
-        if (this.itemsCountPerPageList.includes(itemsLimit) || itemsLimit === HomeComponent.DEFAULT_ITEMS_COUNT_PER_PAGE) {
-            console.log('set items per page', itemsLimit);
-
-            this.itemsPerPage = itemsLimit;
-
-            this.userSeriesConfig.itemsPerPage = this.itemsPerPage;
-
-            this.getSeriesData();
-        }
-    }
-
-    public setNameFilter(event: KeyboardEvent): void {
-        this.userSeriesConfig.seriesName = this.nameFilterInputValue;
-
-        this.getSeriesData();
-    }
-
-    public getSeriesQueryByUserSeriesConfig(): SeriesQueryConfig {
-        const userConfig: UserSeriesConfigI = this.userSeriesConfig;
-
-        return {
-            name: userConfig.seriesName,
-            pageNumber: userConfig.pageNumber,
-            limit: userConfig.itemsPerPage,
-            sortBy: {name: userConfig.sortBy?.name, sortType: userConfig.sortBy?.sortType},
-            genreId: userConfig.genreId,
-            premiereDate: userConfig.premiereDate
-        };
-    }
-
-    protected initYearsOptions(): void {
-        const yearsRange: number = 300;
-        const currentYear: number = new Date().getFullYear();
-        const startYear: number = currentYear - Math.ceil(yearsRange / 2);
-
-        this.yearsOptions = Array.from({length: yearsRange + 1}, (_, index: number) => {
-            return {name: `${startYear + index}`};
-        });
     }
 
 }

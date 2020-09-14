@@ -5,7 +5,7 @@ import {SeriesMetaI} from '../../../interfaces/series/series-meta.i';
     name: 'pageFilter'
 })
 export class SeriesPageFilterPipe implements PipeTransform {
-    public transform(seriesMetaList: SeriesMetaI[], pageNumber: number, itemsPerPage: number): any {
+    public transform(seriesMetaList: SeriesMetaI[], pageNumber: number, itemsPerPage: number): SeriesMetaI[] {
         if (typeof pageNumber === 'number' && typeof itemsPerPage === 'number') {
             // ALTERNATIVE APPROACH TO FIND START ITEM INDEX
             // const endAt: number = this.itemsPerPage * pageNumber;

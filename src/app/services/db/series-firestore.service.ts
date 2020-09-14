@@ -1,17 +1,16 @@
 import {Injectable} from '@angular/core';
-import {from, Observable, throwError, zip} from 'rxjs';
+import {from, Observable, zip} from 'rxjs';
 import {
     AngularFirestore,
     AngularFirestoreCollection,
     AngularFirestoreDocument,
     CollectionReference,
     DocumentData,
-    DocumentReference,
     DocumentSnapshot,
     QueryDocumentSnapshot,
     QuerySnapshot
 } from '@angular/fire/firestore';
-import {bufferCount, concatMap, map, switchMap, take, tap} from 'rxjs/operators';
+import {bufferCount, concatMap, map, switchMap, take} from 'rxjs/operators';
 import * as firebase from 'firebase';
 import Query = firebase.firestore.Query;
 import OrderByDirection = firebase.firestore.OrderByDirection;
@@ -83,21 +82,21 @@ export class SeriesFirestoreService {
     public getSeriesData$(config?: SeriesQueryConfig): Observable<SeriesBox> {
         return zip(from(this.genresCollection.get()), this.getSeriesByConfig$(config)).pipe(
             map(([genresDocs, seriesDocs]: QuerySnapshot<DocumentData>[]) => {
-                const genresList: SeriesGenre[] = [];
-                const seriesList: SeriesDetails[] = [];
+                let seriesList: SeriesDetails[];
 
-                genresDocs.docs.forEach((genreDoc: QueryDocumentSnapshot<FirestoreGenreDocument>) => {
+                const genresList: SeriesGenre[] = genresDocs.docs.map((genreDoc: QueryDocumentSnapshot<FirestoreGenreDocument>) => {
                     const genreDocData: FirestoreGenreDocument = genreDoc.data();
 
-                    genresList.push({
+                    return {
                         id: genreDoc.id,
                         name: genreDocData.name,
                         label: genreDocData.label
-                    });
+                    };
                 });
 
                 const limit: number = config.limit || 5;
                 let pageNumber: number = config.pageNumber || 1;
+
                 if (seriesDocs.size < pageNumber) {
                     pageNumber = Math.ceil(seriesDocs.size / limit);
                 }
@@ -108,10 +107,10 @@ export class SeriesFirestoreService {
                     config.limit || 5
                 );
 
-                docsFilteredByPage.forEach((seriesDoc: QueryDocumentSnapshot<FirestoreSeriesDocument>) => {
+                seriesList = docsFilteredByPage.map((seriesDoc: QueryDocumentSnapshot<FirestoreSeriesDocument>) => {
                     const seriesDocData: FirestoreSeriesDocument = seriesDoc.data();
 
-                    seriesList.push({
+                    return {
                         id: seriesDoc.id,
                         name: seriesDocData.name,
                         premiereDate: seriesDocData.premiereDate,
@@ -119,7 +118,7 @@ export class SeriesFirestoreService {
                         network: seriesDocData.network,
                         genres: genresList.filter((genre: SeriesGenre) => seriesDocData.genresIds.includes(genre.id)),
                         docRef: seriesDoc
-                    });
+                    };
                 });
 
                 return {
@@ -135,13 +134,13 @@ export class SeriesFirestoreService {
 
     public getSeriesByConfig$(config?: SeriesQueryConfig): Observable<QuerySnapshot<DocumentData>> {
         return from(this.firestoreDb.collection<FirestoreSeriesDocument>(SeriesFirestoreService.SERIES_PATH, (ref: CollectionReference) => {
-            let isNameQueried: boolean = false;
+            let isNameBeingQueried: boolean = false;
 
             let seriesQuery: Query<DocumentData>;
 
             if (config) {
                 if (config.name) {
-                    isNameQueried = true;
+                    isNameBeingQueried = true;
 
                     if (seriesQuery) {
                         seriesQuery = seriesQuery.where('name', '>=', config.name).where('name', '<=', config.name + '\uf8ff');
@@ -184,7 +183,7 @@ export class SeriesFirestoreService {
                 }
 
                 if (config.sortBy && config.sortBy.sortType) {
-                    if (isNameQueried && config.sortBy?.name !== 'name') {
+                    if (isNameBeingQueried && config.sortBy?.name !== 'name') {
                         if (seriesQuery) {
                             seriesQuery = seriesQuery.orderBy('name', 'desc');
                         } else {
@@ -201,7 +200,7 @@ export class SeriesFirestoreService {
             }
 
             // TODO temporary limit (don't wanna pay extra money for the read requests)
-            return seriesQuery ? seriesQuery.limit(15) : ref.limit(15);
+            return seriesQuery ? seriesQuery.limit(100) : ref.limit(100);
         }).get());
     }
 
@@ -250,45 +249,7 @@ export class SeriesFirestoreService {
         );
     }
 
-    public getGenres$(): Observable<FirestoreGenreDocument[]> {
-        return this.genresCollection.valueChanges();
-    }
-
-    public getTmdbGenresDocs$(): Observable<QuerySnapshot<DocumentData>> {
-        return from(this.firestoreDb.collection<FirestoreGenreDocument>(SeriesFirestoreService.GENRES_TMDB_PATH).get());
-    }
-
-    public addGenre$(name: string, label: string): Observable<DocumentReference> {
-        return this.getGenreWhere$('name', name).pipe(
-            take(1),
-            switchMap((seriesGenres: SeriesGenre[]) => {
-                if (!seriesGenres.length) {
-                    return from(this.firestoreDb.collection<FirestoreGenreDocument>(SeriesFirestoreService.GENRES_PATH).add({
-                        name,
-                        label
-                    }));
-                }
-
-                return throwError(new Error('GENRE_EXISTS'));
-
-            })
-        );
-    }
-
-    public getSeriesWhere$(field: string, value: any): Observable<FirestoreSeriesDocument[]> {
-        return this.firestoreDb.collection<FirestoreSeriesDocument>(SeriesFirestoreService.SERIES_PATH, (ref: CollectionReference) => {
-            // return ref.where(field, 'array-contains', value).where('name', '>=', 'The').where('name', '<=', 'The' + '\uf8ff');
-
-            return ref.where(field, 'array-contains', value).where('name', '>=', 'Walking').where('name', '<=', 'Walking' + '\uf8ff');
-        }).valueChanges();
-    }
-
-    public getGenreWhere$(field: string, value: any): Observable<FirestoreGenreDocument[]> {
-        return this.firestoreDb.collection<FirestoreGenreDocument>(SeriesFirestoreService.GENRES_PATH, (ref: CollectionReference) => {
-            return ref.where(field, '==', value);
-        }).valueChanges();
-    }
-
+    // dev. purposes function // used this function to add the data to Firestore (with random values for some props) from other api service.
     public addMovie(genres: QuerySnapshot<DocumentData>, name: string, date: string, genresIds: number[]): void {
         const networks: string[] = ['Netflix', 'HBO', 'AMC', 'FX', 'NBC', 'ABC', 'The CW', 'History', 'Fox', 'CBS',
             'Showtime', 'Natural Geographic Channel', 'BBC', 'Disney+', 'DC Universe', 'Paramount Network'];
@@ -300,16 +261,6 @@ export class SeriesFirestoreService {
             network: networks[Math.floor(Math.random() * networks.length)],
             premiereDate: new Date(date)
         })).subscribe();
-    }
-
-    public updateMovie(): void {
-        from(this.firestoreDb.collection(SeriesFirestoreService.SERIES_PATH).get()).pipe(
-            tap((docSnapshot: QuerySnapshot<DocumentData>) => {
-                docSnapshot.docs.forEach((doc: QueryDocumentSnapshot<FirestoreSeriesDocument>) => {
-                    from(doc.ref.update('premiereDate', (doc.data().premiereDate as any).toDate().getFullYear())).subscribe();
-                });
-            })
-        ).subscribe();
     }
 
     protected get genresCollection(): AngularFirestoreCollection<FirestoreGenreDocument> {

@@ -1,18 +1,20 @@
 import {NgModule} from '@angular/core';
 import {RouterModule, Routes} from '@angular/router';
-import {HomeModule} from './modules/home/home.module';
+import {SeriesBoxModule} from './modules/series-box/series-box.module';
 
 const routes: Routes = [
     {
-        path: '', redirectTo: '/home', pathMatch: 'full',
+        path: '', redirectTo: '/series-box', pathMatch: 'full'
     },
     {
-        path: '**', redirectTo: '/home'
+        path: '**', redirectTo: '/series-box'
     },
     {
-        path: 'home', loadChildren: () =>  import('./modules/home/home.module').then((homeModule: {HomeModule: HomeModule}) => {
-            return homeModule.HomeModule;
-        })
+        path: 'series-box',
+        loadChildren: () => import('./modules/series-box/series-box.module')
+            .then((seriesBoxModule: { SeriesBoxModule: SeriesBoxModule }) => {
+                return seriesBoxModule.SeriesBoxModule;
+            })
     }
 ];
 
