@@ -54,7 +54,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
 
     public ngOnDestroy(): void {
-        this.seriesDataSub.unsubscribe();
+        this.seriesDataSub?.unsubscribe();
     }
 
     public getSeriesData(initialQuery: boolean = false): void {
