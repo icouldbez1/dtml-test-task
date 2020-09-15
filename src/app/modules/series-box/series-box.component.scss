@@ -69,7 +69,6 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        box-shadow: 0 0 14px 0 #dcdcdc;
     }
 }
 
@@ -151,6 +150,8 @@
     position: relative;
     display: flex;
     width: 100%;
+
+    margin-top: 20px;
 }
 
 
@@ -189,7 +190,15 @@
     }
 
     .page-control-panel-button {
-        margin: 0 10px;
+        margin: 0 5px;
+
+        &:first-child {
+            margin: 0 5px 0 0;
+        }
+
+        &:last-child {
+            margin: 0 0 0 5px;
+        }
     }
 }
 
