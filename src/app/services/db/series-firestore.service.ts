@@ -12,6 +12,8 @@ import {
 } from '@angular/fire/firestore';
 import {bufferCount, concatMap, map, switchMap, take} from 'rxjs/operators';
 import * as firebase from 'firebase';
+import {HttpRequestMethodEnum} from '../../enums/http/http-request-method.enum';
+import {RequestService} from '../http/http.service';
 import Query = firebase.firestore.Query;
 import OrderByDirection = firebase.firestore.OrderByDirection;
 
@@ -75,12 +77,12 @@ export class SeriesFirestoreService {
     public queryStartSeriesDoc: QueryDocumentSnapshot<DocumentData>;
     public previousConfig: SeriesQueryConfig;
 
-    constructor(protected firestoreDb: AngularFirestore) {
+    constructor(protected firestoreDb: AngularFirestore, private requestService: RequestService) {
 
     }
 
     public getSeriesData$(config?: SeriesQueryConfig): Observable<SeriesBox> {
-        return zip(from(this.genresCollection.get()), this.getSeriesByConfig$(config)).pipe(
+        return zip(this.genresCollection.get(), this.getSeriesByConfig$(config)).pipe(
             map(([genresDocs, seriesDocs]: QuerySnapshot<DocumentData>[]) => {
                 let seriesList: SeriesDetails[];
 
@@ -133,7 +135,7 @@ export class SeriesFirestoreService {
     }
 
     public getSeriesByConfig$(config?: SeriesQueryConfig): Observable<QuerySnapshot<DocumentData>> {
-        return from(this.firestoreDb.collection<FirestoreSeriesDocument>(SeriesFirestoreService.SERIES_PATH, (ref: CollectionReference) => {
+        return this.firestoreDb.collection<FirestoreSeriesDocument>(SeriesFirestoreService.SERIES_PATH, (ref: CollectionReference) => {
             let isNameBeingQueried: boolean = false;
 
             let seriesQuery: Query<DocumentData>;
@@ -141,11 +143,13 @@ export class SeriesFirestoreService {
             if (config) {
                 if (config.name) {
                     isNameBeingQueried = true;
-
+                    const lowerCaseName: string = config.name.toLowerCase();
                     if (seriesQuery) {
-                        seriesQuery = seriesQuery.where('name', '>=', config.name).where('name', '<=', config.name + '\uf8ff');
+                        seriesQuery = seriesQuery.where('nameLowercase', '>=', lowerCaseName)
+                            .where('nameLowercase', '<=', lowerCaseName + '\uf8ff');
                     } else {
-                        seriesQuery = ref.where('name', '>=', config.name).where('name', '<=', config.name + '\uf8ff');
+                        seriesQuery = ref.where('nameLowercase', '>=', lowerCaseName)
+                            .where('nameLowercase', '<=', lowerCaseName + '\uf8ff');
                     }
                 }
 
@@ -202,7 +206,7 @@ export class SeriesFirestoreService {
             }
 
             return ref;
-        }).get());
+        }).get();
     }
 
     public getSeries$(): Observable<{ genres: SeriesGenre[], name: string }[]> {
@@ -257,11 +261,38 @@ export class SeriesFirestoreService {
 
         from(this.firestoreDb.collection(SeriesFirestoreService.SERIES_PATH).add({
             name,
+            nameLowercase: name.toLowerCase(),
             genresIds: genres.docs.filter((doc: any) => genresIds.includes(doc.data().tmdbId)).map((doc: any) => doc.id),
             season: Math.floor(Math.random() * 10) + 1,
             network: networks[Math.floor(Math.random() * networks.length)],
-            premiereDate: new Date(date)
+            premiereDate: new Date(date).getFullYear()
         })).subscribe();
+    }
+
+    // dev. purposes function for retrieving The Movie DataBase series.
+    public getAllTmdbSeries$(): Observable<any[]> {
+        // backdrop_path: "/mGVrXeIjyecj6TKmwPVpHlscEmw.jpg"
+        // first_air_date: "2019-07-25"
+        // genre_ids: (2) [10759, 10765]
+        // id: 76479
+        // name: "The Boys"
+        // origin_country: ["US"]
+        // original_language: "en"
+        // original_name: "The Boys"
+        // overview: "A group."
+        // popularity: 1975.715
+        // poster_path: "/mY7SeH4HFFxW1hiI6cWuwCRKptN.jpg"
+        // vote_average: 8.4
+        // vote_count: 1797
+
+        return this.requestService.request$(HttpRequestMethodEnum.GET,
+            'https://api.themoviedb.org/3/tv/popular?language=en-US&page=8', {
+                headers: {
+                    Authorization: this.authToken
+                }
+            }).pipe(
+            map((genresObject: { results: any[] }) => genresObject.results)
+        );
     }
 
     protected get genresCollection(): AngularFirestoreCollection<FirestoreGenreDocument> {
@@ -284,5 +315,9 @@ export class SeriesFirestoreService {
         }
 
         return items;
+    }
+
+    private get authToken(): string {
+        return 'Bearer YOUR_API_KEY_V4_HERE';
     }
 }
