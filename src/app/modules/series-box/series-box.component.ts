@@ -108,9 +108,12 @@ export class SeriesBoxComponent implements OnInit, OnDestroy {
     }
 
     public setNameFilter(event: KeyboardEvent): void {
-        this.userSeriesConfig.seriesName = this.nameFilterInputValue;
+        if (this.userSeriesConfig.seriesName !== this.nameFilterInputValue) {
+            this.userSeriesConfig.seriesName = this.nameFilterInputValue;
 
-        this.refreshSeriesBox();
+            this.refreshSeriesBox();
+        }
+
     }
 
     public getSeriesQueryByUserSeriesConfig(): SeriesQueryConfig {

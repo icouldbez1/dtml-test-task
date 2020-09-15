@@ -34,11 +34,14 @@ export abstract class FirestoreQueryBuilderService {
 
             if (config.sortBy && config.sortBy?.sortType && config.sortBy?.sortType) {
                 if (isNameBeingQueried && config.sortBy.name !== DatabaseColumnEnum.NAME_LOWERCASE) {
+                    // TODO breaks subsequent order query unless it's not being executed.
+
                     if (seriesQuery) {
-                        seriesQuery = this.getSortQuery(seriesQuery, {name: DatabaseColumnEnum.NAME_LOWERCASE});
+                        seriesQuery = this.getSortQuery(seriesQuery, {name: DatabaseColumnEnum.NAME_LOWERCASE, sortType: 'desc'});
                     } else {
-                        seriesQuery = this.getSortQuery(reference, {name: DatabaseColumnEnum.NAME_LOWERCASE});
+                        seriesQuery = this.getSortQuery(reference, {name: DatabaseColumnEnum.NAME_LOWERCASE, sortType: 'desc'});
                     }
+
                 }
 
                 if (seriesQuery) {
@@ -48,7 +51,7 @@ export abstract class FirestoreQueryBuilderService {
                 }
             }
 
-            return seriesQuery ? seriesQuery.limit(10) : reference.limit(10);
+            return seriesQuery ? seriesQuery : reference;
         }
 
         return reference;

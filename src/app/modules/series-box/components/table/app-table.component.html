@@ -1,45 +1,53 @@
-<div class="table-content">
-    <div class="series-container">
-        <div class="table-container">
-            <div class="table-column-container" *ngFor="let headerColumn of headerColumns">
-                <div class="table-column-header" (click)="changeSort(headerColumn.name)">
-                    <div class="table-column-header-text">{{headerColumn.label}}</div>
-                    <div class="table-column-header-sort-icons-container" *ngIf="headerColumn.isSortable">
-                        <svg
-                                class="sort-asc-icon"
-                                [ngClass]="{'disabled': headerColumn.sortType === 'desc'}"
-                                viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill-rule="evenodd"
-                                clip-rule="evenodd">
-                            <use xlink:href="assets/icons/arrows/iconmonstr-arrow-66.svg#thinArrowIcon"/>
-                        </svg>
-                        <svg
-                                class="sort-desc-icon"
-                                [ngClass]="{'disabled': headerColumn.sortType === 'asc'}"
-                                viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill-rule="evenodd"
-                                clip-rule="evenodd">
-                            <use xlink:href="assets/icons/arrows/iconmonstr-arrow-66.svg#thinArrowIcon"/>
-                        </svg>
-                    </div>
+<div class="main">
+    <div class="table-container column-look">
+        <div class="table-row-container header">
+            <div *ngFor="let headerColumn of headerColumns; index as columnIndex"
+                 [ngStyle]="{'flex-basis': columnIndex !== 0 ? (100 / headerColumns.length + '%') : ''}"
+                 (click)="changeSort(headerColumn.name)"
+                 class="table-row-column-container header"
+            >
+                <div class="table-row-header-column-text">{{headerColumn.label}}</div>
+                <div class="table-column-header-sort-icons-container" *ngIf="headerColumn.isSortable">
+                    <svg
+                            class="sort-asc-icon"
+                            [ngClass]="{'disabled': headerColumn.sortType === 'desc'}"
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill-rule="evenodd"
+                            clip-rule="evenodd">
+                        <use xlink:href="assets/icons/arrows/iconmonstr-arrow-66.svg#thinArrowIcon"/>
+                    </svg>
+                    <svg
+                            class="sort-desc-icon"
+                            [ngClass]="{'disabled': headerColumn.sortType === 'asc'}"
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill-rule="evenodd"
+                            clip-rule="evenodd">
+                        <use xlink:href="assets/icons/arrows/iconmonstr-arrow-66.svg#thinArrowIcon"/>
+                    </svg>
                 </div>
-                <div class="table-column-row" *ngFor="let rowData of rowsList">
-                    <div class="table-column-row-text">
-                        {{rowData.hasOwnProperty(headerColumn.name) ? rowData[headerColumn.name] : "-"}}
-                    </div>
+            </div>
+        </div>
+        <div class="table-row-container" *ngFor="let rowData of rowsList">
+            <div *ngFor="let headerColumn of headerColumns; index as columnIndex"
+                 [ngStyle]="{'flex-basis': columnIndex !== 0 ? (100 / headerColumns.length + '%') : ''}"
+                 class="table-row-column-container">
+                <div class="table-row-column-label-text">
+                    {{headerColumn.label}}:	&nbsp;
+                </div>
+                <div class="table-row-column-text">
+                    {{rowData.hasOwnProperty(headerColumn.name) ? rowData[headerColumn.name] : "-"}}
+                </div>
 
-                    <div *ngIf="headerColumn.name === 'name'" class="genres-container">
-                        <div class="genre-item" *ngFor="let genre of rowData.genres">
-                            <div class="genre-item-text">{{genre.label}}</div>
-                        </div>
+                <div *ngIf="headerColumn.name === 'name'" class="genres-container">
+                    <div class="genre-item" *ngFor="let genre of rowData.genres">
+                        <div class="genre-item-text">{{genre.label}}</div>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="no-rows-notification" *ngIf="!rowsList.length">There are no series to display</div>
-
     </div>
 </div>
