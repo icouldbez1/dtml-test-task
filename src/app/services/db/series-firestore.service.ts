@@ -182,12 +182,12 @@ export class SeriesFirestoreService {
                     }
                 }
 
-                if (config.sortBy && config.sortBy.sortType) {
-                    if (isNameBeingQueried && config.sortBy?.name !== 'name') {
+                if (config.sortBy && config.sortBy?.sortType && config.sortBy?.sortType) {
+                    if (isNameBeingQueried && config.sortBy.name !== 'name') {
                         if (seriesQuery) {
-                            seriesQuery = seriesQuery.orderBy('name', 'desc');
+                            seriesQuery = seriesQuery.orderBy('name');
                         } else {
-                            seriesQuery = ref.orderBy('name', 'desc');
+                            seriesQuery = ref.orderBy('name');
                         }
                     }
 
@@ -197,10 +197,11 @@ export class SeriesFirestoreService {
                         seriesQuery = ref.orderBy(config.sortBy.name, config.sortBy.sortType as OrderByDirection);
                     }
                 }
+
+                return seriesQuery ? seriesQuery : ref;
             }
 
-            // TODO temporary limit (don't wanna pay extra money for the read requests)
-            return seriesQuery ? seriesQuery.limit(100) : ref.limit(100);
+            return ref;
         }).get());
     }
 
