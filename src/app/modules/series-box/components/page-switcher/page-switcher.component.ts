@@ -112,16 +112,10 @@ export class PageSwitcherComponent {
             return this.pageNumbersList.slice((this.pageNumbersList.length - 1) - (numberOfVisiblePages - 1), this.pageNumbersList.length);
         }
 
-        //     if (indexOfCurrentPageMeta > Math.ceil(numberOfVisiblePages / 2)) {
-        //
-        //     }
-        // console.log('current index: ', indexOfCurrentPageMeta);
+        const visiblePageStartIndex: number = indexOfCurrentPageMeta - (halfOfVisiblePages - 1);
+        const visiblePageEndIndex: number = indexOfCurrentPageMeta + (numberOfVisiblePages - halfOfVisiblePages) + 1;
 
-        // console.log('from: ', indexOfCurrentPageMeta - (halfOfVisiblePages - 1));
-        // console.log('to: ', indexOfCurrentPageMeta + (numberOfVisiblePages - halfOfVisiblePages) + 1);
-        // console.log(this.pageNumbersList.slice(indexOfCurrentPageMeta - halfOfVisiblePages - 1, indexOfCurrentPageMeta + (numberOfVisiblePages - halfOfVisiblePages) + 1));
-
-        return this.pageNumbersList.slice(indexOfCurrentPageMeta - (halfOfVisiblePages - 1), indexOfCurrentPageMeta + (numberOfVisiblePages - halfOfVisiblePages) + 1);
+        return this.pageNumbersList.slice(visiblePageStartIndex, visiblePageEndIndex);
     }
 
     protected getTrailingPage(): number {
