@@ -178,7 +178,6 @@ th {
 
     .table-column-row {
         background: white;
-        color: #2f2f2f;
 
         overflow: hidden;
 
@@ -192,6 +191,12 @@ th {
             text-overflow: ellipsis;
             white-space: nowrap;
             overflow: hidden;
+
+            font-weight: bold;
+            font-size: 14px;
+            max-width: 100%;
+
+            color: #5f5f5f;
         }
 
         &:nth-of-type(even) {
@@ -296,6 +301,8 @@ th {
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow: hidden;
+
+        text-transform: lowercase;
     }
 }
 
