@@ -11,11 +11,10 @@ import {
     QuerySnapshot
 } from '@angular/fire/firestore';
 import {bufferCount, concatMap, map, switchMap, take} from 'rxjs/operators';
-import * as firebase from 'firebase';
 import {HttpRequestMethodEnum} from '../../enums/http/http-request-method.enum';
 import {RequestService} from '../http/http.service';
-import Query = firebase.firestore.Query;
-import OrderByDirection = firebase.firestore.OrderByDirection;
+import {FirestoreQueryBuilderService} from './firestore-query-builder.service';
+import {SeriesDataFactory} from './series-data.factory';
 
 export interface SeriesBox {
     genres: SeriesGenre[];
@@ -50,7 +49,7 @@ export interface SeriesQueryConfig {
     sortBy?: { name: string, sortType: string };
 }
 
-interface FirestoreSeriesDocument {
+export interface FirestoreSeriesDocument {
     name: string;
     genre_id: AngularFirestoreDocument<SeriesGenre>;
     genres: AngularFirestoreDocument<SeriesGenre>[];
@@ -60,7 +59,7 @@ interface FirestoreSeriesDocument {
     network: string;
 }
 
-interface FirestoreGenreDocument {
+export interface FirestoreGenreDocument {
     name: string;
     label: string;
 }
@@ -69,143 +68,28 @@ interface FirestoreGenreDocument {
 @Injectable({
     providedIn: 'root'
 })
-export class SeriesFirestoreService {
-    public static readonly GENRES_PATH: string = '/genres';
-    public static readonly GENRES_TMDB_PATH: string = '/genres_tmdb';
+export class SeriesFirestoreService extends FirestoreQueryBuilderService {
+    public static readonly GENRES_PATH: string = '/genres_tmdb';
     public static readonly SERIES_PATH: string = '/series';
 
     public queryStartSeriesDoc: QueryDocumentSnapshot<DocumentData>;
     public previousConfig: SeriesQueryConfig;
 
     constructor(protected firestoreDb: AngularFirestore, private requestService: RequestService) {
-
+        super();
     }
 
     public getSeriesData$(config?: SeriesQueryConfig): Observable<SeriesBox> {
         return zip(this.genresCollection.get(), this.getSeriesByConfig$(config)).pipe(
-            map(([genresDocs, seriesDocs]: QuerySnapshot<DocumentData>[]) => {
-                let seriesList: SeriesDetails[];
-
-                const genresList: SeriesGenre[] = genresDocs.docs.map((genreDoc: QueryDocumentSnapshot<FirestoreGenreDocument>) => {
-                    const genreDocData: FirestoreGenreDocument = genreDoc.data();
-
-                    return {
-                        id: genreDoc.id,
-                        name: genreDocData.name,
-                        label: genreDocData.label
-                    };
-                });
-
-                const limit: number = config.limit || 5;
-                let pageNumber: number = config.pageNumber || 1;
-
-                if (seriesDocs.size < pageNumber) {
-                    pageNumber = Math.ceil(seriesDocs.size / limit);
-                }
-
-                const docsFilteredByPage: QueryDocumentSnapshot<DocumentData>[] = this.paginate<QueryDocumentSnapshot<DocumentData>>(
-                    seriesDocs.docs,
-                    pageNumber,
-                    config.limit || 5
-                );
-
-                seriesList = docsFilteredByPage.map((seriesDoc: QueryDocumentSnapshot<FirestoreSeriesDocument>) => {
-                    const seriesDocData: FirestoreSeriesDocument = seriesDoc.data();
-
-                    return {
-                        id: seriesDoc.id,
-                        name: seriesDocData.name,
-                        premiereDate: seriesDocData.premiereDate,
-                        season: seriesDocData.season,
-                        network: seriesDocData.network,
-                        genres: genresList.filter((genre: SeriesGenre) => seriesDocData.genresIds.includes(genre.id)),
-                        docRef: seriesDoc
-                    };
-                });
-
-                return {
-                    genres: genresList,
-                    series: seriesList,
-                    totalSeriesCount: seriesDocs.size,
-                    page: pageNumber,
-                    totalPages: Math.ceil(seriesDocs.size / limit)
-                };
+            map(([genresSnapshot, seriesSnapshot]: QuerySnapshot<DocumentData>[]) => {
+                return SeriesDataFactory.createSeriesBox(seriesSnapshot, genresSnapshot, config);
             })
         );
     }
 
     public getSeriesByConfig$(config?: SeriesQueryConfig): Observable<QuerySnapshot<DocumentData>> {
         return this.firestoreDb.collection<FirestoreSeriesDocument>(SeriesFirestoreService.SERIES_PATH, (ref: CollectionReference) => {
-            let isNameBeingQueried: boolean = false;
-
-            let seriesQuery: Query<DocumentData>;
-
-            if (config) {
-                if (config.name) {
-                    isNameBeingQueried = true;
-                    const lowerCaseName: string = config.name.toLowerCase();
-                    if (seriesQuery) {
-                        seriesQuery = seriesQuery.where('nameLowercase', '>=', lowerCaseName)
-                            .where('nameLowercase', '<=', lowerCaseName + '\uf8ff');
-                    } else {
-                        seriesQuery = ref.where('nameLowercase', '>=', lowerCaseName)
-                            .where('nameLowercase', '<=', lowerCaseName + '\uf8ff');
-                    }
-                }
-
-                if (config.genreId) {
-                    if (seriesQuery) {
-                        seriesQuery = seriesQuery.where('genresIds', 'array-contains', config.genreId);
-                    } else {
-                        seriesQuery = ref.where('genresIds', 'array-contains', config.genreId);
-                    }
-                }
-
-                if (config.premiereDate) {
-                    // TODO conflicts with orderBy
-                    // const premiereDateYear: number = Number(config.premiereDate);
-                    //
-                    // const premiereYearFromFirstSecond: Date = new Date(premiereDateYear, 0, 1, 0, 0, 0);
-                    // const premiereYearToLastSecond: Date = new Date(premiereDateYear + 1, 0, 1, 0, 0, 0);
-                    //
-                    // console.log(premiereYearFromFirstSecond, premiereYearFromFirstSecond);
-                    // console.log(premiereYearToLastSecond, premiereYearToLastSecond);
-                    //
-                    // if (seriesQuery) {
-                    //     seriesQuery = seriesQuery.where('premiereDate', '>=', premiereYearFromFirstSecond)
-                    //         .where('premiereDate', '<=', premiereYearToLastSecond);
-                    // } else {
-                    //     seriesQuery = ref.where('premiereDate', '>', premiereYearFromFirstSecond)
-                    //         .where('premiereDate', '<', premiereYearToLastSecond);
-                    // }
-
-                    if (seriesQuery) {
-                        seriesQuery = seriesQuery.where('premiereDate', '==', config.premiereDate);
-                    } else {
-                        seriesQuery = ref.where('premiereDate', '==', config.premiereDate);
-                    }
-                }
-
-                if (config.sortBy && config.sortBy?.sortType && config.sortBy?.sortType) {
-                    if (isNameBeingQueried && config.sortBy.name !== 'name') {
-                        if (seriesQuery) {
-                            seriesQuery = seriesQuery.orderBy('name');
-                        } else {
-                            seriesQuery = ref.orderBy('name');
-                        }
-                    }
-
-                    if (seriesQuery) {
-                        seriesQuery = seriesQuery.orderBy(config.sortBy.name, config.sortBy.sortType as OrderByDirection);
-                    } else {
-                        seriesQuery = ref.orderBy(config.sortBy.name, config.sortBy.sortType as OrderByDirection);
-                    }
-                }
-
-                return seriesQuery ? seriesQuery : ref;
-            }
-
-            return ref;
+            return SeriesFirestoreService.getSeriesQuery(ref, config);
         }).get();
     }
 
@@ -296,25 +180,11 @@ export class SeriesFirestoreService {
     }
 
     protected get genresCollection(): AngularFirestoreCollection<FirestoreGenreDocument> {
-        return this.firestoreDb.collection<FirestoreGenreDocument>(SeriesFirestoreService.GENRES_TMDB_PATH);
+        return this.firestoreDb.collection<FirestoreGenreDocument>(SeriesFirestoreService.GENRES_PATH);
     }
 
     protected get seriesCollection(): AngularFirestoreCollection<{ name: string, genre_id: AngularFirestoreDocument }> {
-        return this.firestoreDb.collection<{ name: string, genre_id: AngularFirestoreDocument }>(SeriesFirestoreService.SERIES_PATH);
-    }
-
-    protected paginate<T>(items: T[], pageNumber: number, itemsPerPage: number): T[] {
-        if (typeof pageNumber === 'number' && typeof itemsPerPage === 'number') {
-            // ALTERNATIVE APPROACH TO FIND START ITEM INDEX
-            // const endAt: number = this.itemsPerPage * pageNumber;
-            // const startFrom: number = endAt - this.itemsPerPage;
-
-            const startItemIndex: number = itemsPerPage * (pageNumber - 1);
-
-            return items.slice(startItemIndex, startItemIndex + itemsPerPage);
-        }
-
-        return items;
+        return this.firestoreDb.collection<FirestoreSeriesDocument>(SeriesFirestoreService.SERIES_PATH);
     }
 
     private get authToken(): string {
