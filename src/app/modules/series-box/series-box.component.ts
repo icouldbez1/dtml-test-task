@@ -81,6 +81,7 @@ export class SeriesBoxComponent implements OnInit, OnDestroy {
 
         const seriesQuery: SeriesQueryConfig = this.getSeriesQueryByUserSeriesConfig();
         seriesQuery.lastDoc = this.localSeriesList[this.localSeriesList.length - 1]?.docRef;
+        seriesQuery.infiniteLoading = true;
 
         this.seriesFirestoreService.loadMoreSeries$(seriesQuery).pipe(
             tap((seriesBox: InfiniteLoadingSeriesBox) => {

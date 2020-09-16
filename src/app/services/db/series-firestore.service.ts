@@ -7,7 +7,6 @@ import {
     CollectionReference,
     DocumentData,
     DocumentSnapshot,
-    Query,
     QueryDocumentSnapshot,
     QuerySnapshot
 } from '@angular/fire/firestore';
@@ -50,6 +49,7 @@ export interface SeriesQueryConfig {
     limit?: number;
     sortBy?: { name: string, sortType: string };
     lastDoc?: QueryDocumentSnapshot<FirestoreSeriesDocument>;
+    infiniteLoading?: boolean;
 }
 
 export interface FirestoreSeriesDocument {
@@ -96,23 +96,25 @@ export class SeriesFirestoreService extends FirestoreQueryBuilderService {
         );
     }
 
-    public getSeriesByConfig$(config?: SeriesQueryConfig): Observable<QuerySnapshot<DocumentData>> {
-        return this.firestoreDb.collection<FirestoreSeriesDocument>(SeriesFirestoreService.SERIES_PATH, (ref: CollectionReference) => {
-            return SeriesFirestoreService.getSeriesQuery(ref, config).limit(20);
-        }).get();
-    }
-
     public loadMoreSeries$(config: SeriesQueryConfig): Observable<InfiniteLoadingSeriesBox> {
         return zip(
             this.genresCollection.get(),
-            this.firestoreDb.collection<FirestoreSeriesDocument>(SeriesFirestoreService.SERIES_PATH, (ref: CollectionReference) => {
-                return SeriesFirestoreService.getSeriesInfiniteLoadingQuery(ref, config);
-            }).get()
+            this.getSeriesByConfig$(config)
         ).pipe(
             map(([genresSnapshot, seriesSnapshot]: QuerySnapshot<DocumentData>[]) => {
                 return SeriesDataFactory.transformSeriesData(seriesSnapshot.docs, genresSnapshot.docs);
             })
         );
+    }
+
+    public getSeriesByConfig$(config?: SeriesQueryConfig): Observable<QuerySnapshot<DocumentData>> {
+        return this.firestoreDb.collection<FirestoreSeriesDocument>(SeriesFirestoreService.SERIES_PATH, (ref: CollectionReference) => {
+            if (config?.infiniteLoading) {
+                return SeriesFirestoreService.getSeriesInfiniteLoadingQuery(ref, config);
+            }
+
+            return SeriesFirestoreService.getSeriesQuery(ref, config);
+        }).get();
     }
 
     public getSeries$(): Observable<{ genres: SeriesGenre[], name: string }[]> {
