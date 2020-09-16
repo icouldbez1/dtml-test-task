@@ -31,7 +31,8 @@ export class SeriesDataFactory {
             return {
                 id: genreDoc.id,
                 name: genreDocData.name,
-                label: genreDocData.label
+                label: genreDocData.label,
+                backgroundColor: genreDocData.backgroundColor
             };
         });
 

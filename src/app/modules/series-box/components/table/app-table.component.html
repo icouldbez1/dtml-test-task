@@ -41,7 +41,8 @@
                 </div>
 
                 <div *ngIf="headerColumn.name === 'name'" class="genres-container">
-                    <div class="genre-item" *ngFor="let genre of rowData.genres">
+                    <div class="genre-item" *ngFor="let genre of rowData.genres"
+                    [style]="{'background': genre.backgroundColor || ''}">
                         <div class="genre-item-text">{{genre.label}}</div>
                     </div>
                 </div>

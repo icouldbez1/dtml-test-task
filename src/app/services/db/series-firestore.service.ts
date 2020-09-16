@@ -38,6 +38,7 @@ export interface SeriesGenre {
     id: string;
     name: string;
     label: string;
+    backgroundColor?: string;
 }
 
 export interface SeriesQueryConfig {
@@ -62,6 +63,7 @@ export interface FirestoreSeriesDocument {
 export interface FirestoreGenreDocument {
     name: string;
     label: string;
+    backgroundColor: string;
 }
 
 

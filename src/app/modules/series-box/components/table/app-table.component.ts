@@ -1,5 +1,6 @@
 import {Component, ElementRef, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {OrderApproachEnum} from '../../enums/order-approach.enum';
+import {SeriesDetails} from '../../../../services/db/series-firestore.service';
 
 export interface HeaderColumn {
     name: string;
@@ -27,7 +28,7 @@ export class AppTableComponent {
 
     public headerColumns: HeaderColumn[] = [];
 
-    @Input() public rowsList: { [key: string]: any }[] = [];
+    @Input() public rowsList: SeriesDetails[] = [];
 
     constructor() {
     }
