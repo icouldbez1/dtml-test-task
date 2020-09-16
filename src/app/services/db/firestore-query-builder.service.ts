@@ -1,6 +1,6 @@
 import {CollectionReference, Query} from '@angular/fire/firestore';
 import {DatabaseColumnEnum} from '../../modules/series-box/enums/database-columns/database-column.enum';
-import {SeriesQueryConfig} from './series-firestore.service';
+import {FirestoreSeriesDocument, SeriesQueryConfig} from './series-firestore.service';
 import OrderByDirection = firebase.firestore.OrderByDirection;
 
 export abstract class FirestoreQueryBuilderService {
@@ -91,5 +91,14 @@ export abstract class FirestoreQueryBuilderService {
         const sortType: OrderByDirection = sortData.sortType as OrderByDirection;
 
         return reference.orderBy(sortData.name, sortType ? sortType : 'asc');
+    }
+
+    public static getSeriesInfiniteLoadingQuery(reference: CollectionReference, config?: SeriesQueryConfig): Query {
+            let query: Query = this.getSeriesQuery(reference, config);
+
+            if (config?.lastDoc) {
+                query = query.startAfter(config.lastDoc);
+            }
+            return query.limit(config.limit);
     }
 }

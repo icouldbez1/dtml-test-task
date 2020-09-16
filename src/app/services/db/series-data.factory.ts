@@ -23,9 +23,31 @@ export class SeriesDataFactory {
             pageNumber = 1;
         }
 
-        let seriesList: SeriesDetails[];
+        const seriesDocs: QueryDocumentSnapshot<DocumentData>[] = this.paginate<QueryDocumentSnapshot<DocumentData>>(
+            seriesSnapshot.docs,
+            pageNumber,
+            limit
+        );
 
-        const genresList: SeriesGenre[] = genresSnapshot.docs.map((genreDoc: QueryDocumentSnapshot<FirestoreGenreDocument>) => {
+        const seriesData: { series: SeriesDetails[], genres: SeriesGenre[] } = this.transformSeriesData(
+            seriesDocs,
+            genresSnapshot.docs);
+
+
+        return {
+            genres: seriesData.genres,
+            series: seriesData.series,
+            totalSeriesCount: seriesSnapshot.size,
+            page: pageNumber,
+            totalPages: totalSeriesPages
+        };
+    }
+
+    // TODO function name has no sense.
+    public static transformSeriesData(seriesDocs: QueryDocumentSnapshot<DocumentData>[],
+                                      genresDocs: QueryDocumentSnapshot<DocumentData>[]
+    ): { series: SeriesDetails[], genres: SeriesGenre[] } {
+        const genresList: SeriesGenre[] = genresDocs.map((genreDoc: QueryDocumentSnapshot<FirestoreGenreDocument>) => {
             const genreDocData: FirestoreGenreDocument = genreDoc.data();
 
             return {
@@ -36,13 +58,7 @@ export class SeriesDataFactory {
             };
         });
 
-        const docsFilteredByPage: QueryDocumentSnapshot<DocumentData>[] = this.paginate<QueryDocumentSnapshot<DocumentData>>(
-            seriesSnapshot.docs,
-            pageNumber,
-            limit
-        );
-
-        seriesList = docsFilteredByPage.map((seriesDoc: QueryDocumentSnapshot<FirestoreSeriesDocument>) => {
+        const seriesList: SeriesDetails[] = seriesDocs.map((seriesDoc: QueryDocumentSnapshot<FirestoreSeriesDocument>) => {
             const seriesDocData: FirestoreSeriesDocument = seriesDoc.data();
 
             return {
@@ -58,10 +74,7 @@ export class SeriesDataFactory {
 
         return {
             genres: genresList,
-            series: seriesList,
-            totalSeriesCount: seriesSnapshot.size,
-            page: pageNumber,
-            totalPages: totalSeriesPages
+            series: seriesList
         };
     }
 

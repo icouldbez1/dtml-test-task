@@ -10,6 +10,8 @@ import {SeriesPageFilterPipe} from './pipes/series-page-filter.pipe';
 import {AngularMaterialModule} from '../angular-material/angular-material.module';
 import {SelectorComponent} from './components/selector/selector.component';
 import {MatSnackBarModule} from '@angular/material/snack-bar';
+import {InfiniteScrollModule} from 'ngx-infinite-scroll';
+import {MatSidenavModule} from '@angular/material/sidenav';
 
 
 @NgModule({
@@ -26,7 +28,9 @@ import {MatSnackBarModule} from '@angular/material/snack-bar';
         SeriesBoxRoutingModule,
         FormsModule,
         AngularMaterialModule,
-        MatSnackBarModule
+        MatSnackBarModule,
+        InfiniteScrollModule,
+        MatSidenavModule
     ],
     exports: [
         PageSwitcherComponent

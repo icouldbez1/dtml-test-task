@@ -1,11 +1,20 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
-import {catchError, finalize, tap} from 'rxjs/operators';
+import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {catchError, finalize, skip, tap} from 'rxjs/operators';
 import {ColumnSortChangeData, HeaderColumn} from './components/table/app-table.component';
-import {SeriesBox, SeriesDetails, SeriesFirestoreService, SeriesGenre, SeriesQueryConfig} from '../../services/db/series-firestore.service';
+import {
+    InfiniteLoadingSeriesBox,
+    SeriesBox,
+    SeriesDetails,
+    SeriesFirestoreService,
+    SeriesGenre,
+    SeriesQueryConfig
+} from '../../services/db/series-firestore.service';
 import {UserSeriesConfigI} from './interfaces/user-series-config.i';
 import {Subscription, throwError} from 'rxjs';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {OrderApproachEnum} from './enums/order-approach.enum';
+import {BreakpointObserver, BreakpointState} from '@angular/cdk/layout';
+import {MatDrawer} from '@angular/material/sidenav';
 
 @Component({
     selector: 'app-series-box',
@@ -15,6 +24,8 @@ import {OrderApproachEnum} from './enums/order-approach.enum';
 export class SeriesBoxComponent implements OnInit, OnDestroy {
     public static readonly DEFAULT_ITEMS_COUNT_PER_PAGE: number = 5;
 
+    @ViewChild(MatDrawer) public drawer: MatDrawer;
+
     public localSeriesList: SeriesDetails[] = [];
     public seriesLoadError = true;
 
@@ -22,7 +33,6 @@ export class SeriesBoxComponent implements OnInit, OnDestroy {
 
     public countOfPagesNumerations: number = 3;
     public itemsCountPerPageList: number[] = [5, 10, 25];
-    public activePage: number;
 
     public itemsPerPage: number = SeriesBoxComponent.DEFAULT_ITEMS_COUNT_PER_PAGE;
 
@@ -33,6 +43,11 @@ export class SeriesBoxComponent implements OnInit, OnDestroy {
     public isLoaderVisible: boolean = false;
 
     public nameFilterInputValue: string = '';
+
+
+    public isInfiniteLoading: boolean = false;
+
+    public isLowRes: boolean;
 
     public tableColumns: HeaderColumn[] = [
         {name: 'name', label: 'Name', isSortable: true},
@@ -45,7 +60,11 @@ export class SeriesBoxComponent implements OnInit, OnDestroy {
 
     constructor(
         private seriesFirestoreService: SeriesFirestoreService,
-        private snackBarService: MatSnackBar) {
+        private snackBarService: MatSnackBar,
+        private breakPointObserver: BreakpointObserver
+    ) {
+        this.observeMaxWidth();
+
         this.initYearsOptions();
         this.refreshSeriesBox(true);
     }
@@ -57,9 +76,25 @@ export class SeriesBoxComponent implements OnInit, OnDestroy {
         this.seriesDataSub?.unsubscribe();
     }
 
-    public setActivePage(pageNumber: number): void {
-        this.activePage = pageNumber;
+    public onScroll(event): void {
+        this.isInfiniteLoading = true;
 
+        const seriesQuery: SeriesQueryConfig = this.getSeriesQueryByUserSeriesConfig();
+        seriesQuery.lastDoc = this.localSeriesList[this.localSeriesList.length - 1]?.docRef;
+
+        this.seriesFirestoreService.loadMoreSeries$(seriesQuery).pipe(
+            tap((seriesBox: InfiniteLoadingSeriesBox) => {
+                if (seriesBox.series.length) {
+                    this.localSeriesList.push(...seriesBox.series);
+                }
+            }),
+            finalize(() => {
+                this.isInfiniteLoading = false;
+            })
+        ).subscribe();
+    }
+
+    public setActivePage(pageNumber: number): void {
         this.userSeriesConfig.pageNumber = pageNumber;
 
         this.refreshSeriesBox();
@@ -167,6 +202,27 @@ export class SeriesBoxComponent implements OnInit, OnDestroy {
             }),
             finalize(() => {
                 this.isLoaderVisible = false;
+            })
+        ).subscribe();
+    }
+
+    protected observeMaxWidth(): void {
+        this.breakPointObserver.observe([
+            '(max-width: 750px)'
+        ]).pipe(
+            tap((breakpointState: BreakpointState) => {
+                this.isLowRes = breakpointState.matches;
+
+
+            }),
+            skip(1),
+            tap((breakpointState: BreakpointState) => {
+
+                if (!breakpointState.matches) {
+                    this.drawer.close();
+                }
+
+                this.refreshSeriesBox(true);
             })
         ).subscribe();
     }

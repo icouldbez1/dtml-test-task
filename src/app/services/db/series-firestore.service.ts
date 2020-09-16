@@ -7,6 +7,7 @@ import {
     CollectionReference,
     DocumentData,
     DocumentSnapshot,
+    Query,
     QueryDocumentSnapshot,
     QuerySnapshot
 } from '@angular/fire/firestore';
@@ -48,6 +49,7 @@ export interface SeriesQueryConfig {
     pageNumber?: number;
     limit?: number;
     sortBy?: { name: string, sortType: string };
+    lastDoc?: QueryDocumentSnapshot<FirestoreSeriesDocument>;
 }
 
 export interface FirestoreSeriesDocument {
@@ -64,6 +66,11 @@ export interface FirestoreGenreDocument {
     name: string;
     label: string;
     backgroundColor: string;
+}
+
+export interface InfiniteLoadingSeriesBox {
+    genres: SeriesGenre[];
+    series: SeriesDetails[];
 }
 
 
@@ -91,8 +98,21 @@ export class SeriesFirestoreService extends FirestoreQueryBuilderService {
 
     public getSeriesByConfig$(config?: SeriesQueryConfig): Observable<QuerySnapshot<DocumentData>> {
         return this.firestoreDb.collection<FirestoreSeriesDocument>(SeriesFirestoreService.SERIES_PATH, (ref: CollectionReference) => {
-            return SeriesFirestoreService.getSeriesQuery(ref, config);
+            return SeriesFirestoreService.getSeriesQuery(ref, config).limit(20);
         }).get();
+    }
+
+    public loadMoreSeries$(config: SeriesQueryConfig): Observable<InfiniteLoadingSeriesBox> {
+        return zip(
+            this.genresCollection.get(),
+            this.firestoreDb.collection<FirestoreSeriesDocument>(SeriesFirestoreService.SERIES_PATH, (ref: CollectionReference) => {
+                return SeriesFirestoreService.getSeriesInfiniteLoadingQuery(ref, config);
+            }).get()
+        ).pipe(
+            map(([genresSnapshot, seriesSnapshot]: QuerySnapshot<DocumentData>[]) => {
+                return SeriesDataFactory.transformSeriesData(seriesSnapshot.docs, genresSnapshot.docs);
+            })
+        );
     }
 
     public getSeries$(): Observable<{ genres: SeriesGenre[], name: string }[]> {

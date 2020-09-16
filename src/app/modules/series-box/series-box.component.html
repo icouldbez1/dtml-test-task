@@ -1,41 +1,14 @@
-<div class="page-content">
+<div class="page-content"
+     infiniteScroll
+     (scrolled)="onScroll($event)"
+     [infiniteScrollDisabled]="isInfiniteLoading || !this.isLowRes"
+     [infiniteScrollDistance]="1"
+>
     <div class="series-table-container">
         <div class="series-table-content">
             <!-- filters begin -->
-            <div class="series-filters-container">
-                <div class="filter-column-container no-grow flex-basis-40">
-                    <div class="input-cont">
-                        <input class="input-dtml" type="text"
-                               placeholder="Name"
-                               value="This is dummy text"
-                               [(ngModel)]="nameFilterInputValue"
-                               (keyup)="setNameFilter($event)">
-
-                        <div class="search-icon-container">
-                            <svg class="search-icon" viewBox="0 0 446.25 446.25" xmlns="http://www.w3.org/2000/svg"
-                                 fill-rule="evenodd"
-                                 clip-rule="evenodd">
-                                <use xlink:href="assets/icons/searching-magnifying-glass.svg#searchIcon"/>
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-                <div class="filter-column-container">
-                    <app-selector [placeHolder]="'Genre'"
-                                  [options]="genres"
-                                  (optionChange)="setGenreFilter($event)"
-                    >
-                    </app-selector>
-                </div>
-                <div class="filter-column-container">
-                    <app-selector [placeHolder]="'Premiere year'"
-                                  [options]="yearsOptions"
-                                  (optionChange)="setPremiereFilter($event)"
-                    ></app-selector>
-                </div>
-            </div>
+            <ng-container *ngTemplateOutlet="!isLowRes ? filtersTemplate : null"></ng-container>
             <!-- filters end -->
-
 
             <!-- series list (table) begin -->
             <app-table
@@ -49,37 +22,11 @@
 
 
             <!--page & items per page container begin -->
-            <div class="page-control-panel">
-                <div class="pages-numbers-container">
-                    <app-page-switcher-component
-                            class="page-switcher"
-                            [pagesCount]="userSeriesConfig.pagesCount"
-                            [activePage]="userSeriesConfig.pageNumber"
-                            [pageNumerationsCount]="countOfPagesNumerations"
-                            (selectedPage)="setActivePage($event)"
-                    >
-                    </app-page-switcher-component>
-                </div>
-
-
-                <div class="items-per-page-limitations-container">
-                    <div class="items-per-page-limitations-content">
-                        <div *ngFor="let itemsPerPageVariant of this.itemsCountPerPageList"
-                             class="page-number page-control-panel-button"
-                             [ngClass]="{'active': itemsPerPage === itemsPerPageVariant}"
-                             (click)="setItemsPerPageLimit(itemsPerPageVariant)"
-                        >
-                            <div class="page-control-panel-button-text">{{itemsPerPageVariant}}</div>
-
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <ng-container *ngTemplateOutlet="pagesNavigation"></ng-container>
             <!--page & items per page container end -->
 
         </div>
     </div>
-
 
     <div class="pages-numerations-limitations-container">
         <div style="color: #adadad;">Count of displayed pages numerations</div>
@@ -98,5 +45,92 @@
 
 </div>
 
+<div class="loading-more-text" [ngClass]="{'visible': isInfiniteLoading}">Loading more...</div>
 
+<div class="sidemenu-toggle-button-container">
+    <button type="button" (click)="drawer.toggle()">
+        Filters
+    </button>
+</div>
 
+<div class="drawer-absolute-container">
+    <mat-drawer-container class="drawer" autosize>
+        <mat-drawer #drawer mode="over">
+            <ng-container *ngTemplateOutlet="filtersTemplate"></ng-container>
+            <ng-container *ngTemplateOutlet="itemsPerPageContainer"></ng-container>
+            <div class="sidemenu-toggle-button-container">
+                <button type="button" (click)="drawer.toggle()">
+                    Close
+                </button>
+            </div>
+        </mat-drawer>
+
+    </mat-drawer-container>
+</div>
+
+<ng-template #filtersTemplate>
+    <div class="series-filters-container">
+        <div class="filter-column-container no-grow flex-basis-40">
+            <div class="input-cont">
+                <input class="input-dtml" type="text"
+                       placeholder="Name"
+                       value="This is dummy text"
+                       [(ngModel)]="nameFilterInputValue"
+                       (keyup)="setNameFilter($event)">
+
+                <div class="search-icon-container">
+                    <svg class="search-icon" viewBox="0 0 446.25 446.25" xmlns="http://www.w3.org/2000/svg"
+                         fill-rule="evenodd"
+                         clip-rule="evenodd">
+                        <use xlink:href="assets/icons/searching-magnifying-glass.svg#searchIcon"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        <div class="filter-column-container">
+            <app-selector [placeHolder]="'Genre'"
+                          [options]="genres"
+                          (optionChange)="setGenreFilter($event)"
+            >
+            </app-selector>
+        </div>
+        <div class="filter-column-container">
+            <app-selector [placeHolder]="'Premiere year'"
+                          [options]="yearsOptions"
+                          (optionChange)="setPremiereFilter($event)"
+            ></app-selector>
+        </div>
+    </div>
+</ng-template>
+
+<ng-template #pagesNavigation>
+    <div class="page-control-panel">
+        <div class="pages-numbers-container">
+            <app-page-switcher-component
+                    class="page-switcher"
+                    [pagesCount]="userSeriesConfig.pagesCount"
+                    [activePage]="userSeriesConfig.pageNumber"
+                    [pageNumerationsCount]="countOfPagesNumerations"
+                    (selectedPage)="setActivePage($event)"
+            >
+            </app-page-switcher-component>
+        </div>
+
+        <ng-container *ngTemplateOutlet="itemsPerPageContainer"></ng-container>
+    </div>
+</ng-template>
+
+<ng-template #itemsPerPageContainer>
+    <div class="items-per-page-limitations-container">
+        <div class="items-per-page-limitations-content">
+            <div *ngFor="let itemsPerPageVariant of this.itemsCountPerPageList"
+                 class="page-number page-control-panel-button"
+                 [ngClass]="{'active': itemsPerPage === itemsPerPageVariant}"
+                 (click)="setItemsPerPageLimit(itemsPerPageVariant)"
+            >
+                <div class="page-control-panel-button-text">{{itemsPerPageVariant}}</div>
+
+            </div>
+        </div>
+    </div>
+</ng-template>
