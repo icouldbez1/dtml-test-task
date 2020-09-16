@@ -184,6 +184,10 @@
 }
 
 .table-row-header-column-text {
+    width: 100%;
+}
+
+.table-row-header-column-text {
     color: white;
 }
 
@@ -221,6 +225,7 @@
     .table-row-column-container {
         justify-content: flex-start;
         padding: 10px 10px;
+        min-height: unset;
     }
 
     .table-row-column-text {
