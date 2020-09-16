@@ -14,6 +14,15 @@ export class SeriesDataFactory {
         genresSnapshot: QuerySnapshot<DocumentData>,
         config?: SeriesQueryConfig
     ): SeriesBox {
+        const limit: number = config?.limit || 5;
+        let pageNumber: number = config?.pageNumber || 1;
+
+        const totalSeriesPages: number = Math.ceil(seriesSnapshot.size / limit);
+
+        if (totalSeriesPages < pageNumber) {
+            pageNumber = 1;
+        }
+
         let seriesList: SeriesDetails[];
 
         const genresList: SeriesGenre[] = genresSnapshot.docs.map((genreDoc: QueryDocumentSnapshot<FirestoreGenreDocument>) => {
@@ -25,13 +34,6 @@ export class SeriesDataFactory {
                 label: genreDocData.label
             };
         });
-
-        const limit: number = config?.limit || 5;
-        let pageNumber: number = config?.pageNumber || 1;
-
-        if (seriesSnapshot.size < pageNumber) {
-            pageNumber = Math.ceil(seriesSnapshot.size / limit);
-        }
 
         const docsFilteredByPage: QueryDocumentSnapshot<DocumentData>[] = this.paginate<QueryDocumentSnapshot<DocumentData>>(
             seriesSnapshot.docs,
@@ -58,7 +60,7 @@ export class SeriesDataFactory {
             series: seriesList,
             totalSeriesCount: seriesSnapshot.size,
             page: pageNumber,
-            totalPages: Math.ceil(seriesSnapshot.size / limit)
+            totalPages: totalSeriesPages
         };
     }
 
